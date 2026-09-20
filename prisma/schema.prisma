@@ -1,0 +1,401 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum AccountProvider {
+  LOCAL
+  GOOGLE
+}
+
+enum FileType {
+  IMAGE
+  DOCUMENT
+  PDF
+  OTHER
+}
+
+enum ContactMessageStatus {
+  NEW
+  READ
+  REPLIED
+  ARCHIVED
+}
+
+
+// ============================================================
+// USER / AUTHENTICATION
+// ============================================================
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String?
+  role         UserRole @default(USER)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  accounts      Account[]
+  profile       Profile?
+  refreshTokens RefreshToken[]
+
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+
+model Account {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider   AccountProvider
+  providerId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  
+  @@unique([provider, providerId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+
+model RefreshToken {
+  id String @id @default(uuid())
+
+  tokenHash String @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+
+// ============================================================
+// PROFILE
+// ============================================================
+
+model Profile {
+  id String @id @default(uuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  firstName       String
+  lastName        String
+  headline        String?
+  bio             String?
+  location        String?
+  phone           String?
+  email           String?
+  website         String?
+  githubUrl       String?
+  linkedinUrl     String?
+  twitterUrl      String?
+  profileImageUrl String?
+  bannerImageUrl  String?
+
+  isPublished Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isPublished])
+  @@map("profiles")
+}
+
+
+// ============================================================
+// INTERESTS
+// ============================================================
+
+model Interest {
+  id String @id @default(uuid())
+
+  name        String
+  description String?
+  icon        String?
+
+  displayOrder Int @default(0)
+  isPublished  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isPublished])
+  @@index([displayOrder])
+  @@map("interests")
+}
+
+
+// ============================================================
+// CERTIFICATIONS
+// ============================================================
+
+model Certification {
+  id String @id @default(uuid())
+
+  name        String
+  issuer      String
+  description String?
+
+  issueDate  DateTime?
+  expiryDate DateTime?
+  credentialId String?
+  credentialUrl String?
+
+  imageUrl String?
+
+  displayOrder Int @default(0)
+  isPublished  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isPublished])
+  @@index([displayOrder])
+  @@map("certifications")
+}
+
+
+// ============================================================
+// EXPERIENCE
+// ============================================================
+
+model Experience {
+  id String @id @default(uuid())
+
+  company     String
+  position    String
+  location    String?
+  description String?
+
+  startDate DateTime
+  endDate   DateTime?
+
+  isCurrent Boolean @default(false)
+
+  displayOrder Int @default(0)
+  isPublished  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isPublished])
+  @@index([startDate])
+  @@index([displayOrder])
+  @@map("experiences")
+}
+
+
+// ============================================================
+// EDUCATION
+// ============================================================
+
+model Education {
+  id String @id @default(uuid())
+
+  institution String
+  degree      String
+  field       String?
+  description String?
+
+  startDate DateTime
+  endDate   DateTime?
+
+  isCurrent Boolean @default(false)
+
+  displayOrder Int @default(0)
+  isPublished  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isPublished])
+  @@index([displayOrder])
+  @@map("education")
+}
+
+
+// ============================================================
+// PROJECTS
+// ============================================================
+
+model Project {
+  id String @id @default(uuid())
+
+  name        String
+  slug        String @unique
+  description String
+  content     String?
+
+  liveUrl    String?
+  githubUrl  String?
+  imageUrl   String?
+
+  displayOrder Int @default(0)
+  isFeatured   Boolean @default(false)
+  isPublished  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  images ProjectImage[]
+
+  @@index([isPublished])
+  @@index([isFeatured])
+  @@index([displayOrder])
+  @@map("projects")
+}
+
+
+model ProjectImage {
+  id String @id @default(uuid())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  url       String
+  altText   String?
+  displayOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@index([displayOrder])
+  @@map("project_images")
+}
+
+
+// ============================================================
+// SKILLS
+// ============================================================
+
+model Skill {
+  id String @id @default(uuid())
+
+  name        String
+  category    String?
+  description String?
+  level       Int?
+
+  iconUrl String?
+
+  displayOrder Int @default(0)
+  isPublished  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isPublished])
+  @@index([category])
+  @@index([displayOrder])
+  @@map("skills")
+}
+
+
+// ============================================================
+// FILE UPLOADS
+// ============================================================
+
+model File {
+  id String @id @default(uuid())
+
+  originalName String
+  storedName   String
+
+  mimeType String
+  size     Int
+
+  type FileType
+
+  path      String
+  url       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([mimeType])
+  @@map("files")
+}
+
+
+// ============================================================
+// CV
+// ============================================================
+
+model CV {
+  id String @id @default(uuid())
+
+  title       String
+  description String?
+
+  fileUrl  String?
+  filePath String?
+
+  version Int @default(1)
+
+  isCurrent   Boolean @default(false)
+  isPublished Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isCurrent])
+  @@index([isPublished])
+  @@map("cvs")
+}
+
+
+// ============================================================
+// CONTACT MESSAGES
+// ============================================================
+
+model ContactMessage {
+  id String @id @default(uuid())
+
+  name    String
+  email   String
+  subject String
+  message String
+
+  status ContactMessageStatus @default(NEW)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("contact_messages")
+}
