@@ -1,9 +1,12 @@
 import express,{type Request, type Response} from 'express';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 
 dotenv.config();
 
 const PORT =process.env.PORT || 3000;
+
+// const secret= crypto.randomBytes(64).toString("hex");
 
 const app=express();
 app.use(express.json());
@@ -15,5 +18,5 @@ app.get('/health',async(req:Request, res:Response)=>{
 });
 
 app.listen( PORT, ()=>{
-    console.log("server running on port 3000!")
+    console.log(`server running on port ${PORT}`);
 })
