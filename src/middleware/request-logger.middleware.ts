@@ -1,24 +1,25 @@
-import express, {Request, Response, NextFunction} from 'express';
-import {logger} from '../lib/logger';
+import type { Request, Response, NextFunction } from 'express';
+import { logger } from '../lib/logger';
 
+export const requestLogger = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  const startTime = Date.now();
 
-export const requestLogger = (req:Request, res:Response,next:NextFunction)=>{
+  res.on('finish', () => {
+    logger.info(
+      {
+        requestId: req.requestId,
+        method: req.method,
+        status: res.statusCode,
+        path: req.originalUrl,
+        duration: Date.now() - startTime,
+      },
+      'HTTP request',
+    );
+  });
 
-    const startTime = Date.now();
-
-    res.on("finish",()=>{
-        const finishTime= Date.now();
-
-        const duration= finishTime- startTime;
-
-        logger.info({
-            requestId: req.requestId,
-            method:req.method,
-            status:req.statusCode,
-            path:req.path,
-            duration
-        }, "HTTP request")
-    })
-
-    next()
-}
+  next();
+};

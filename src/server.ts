@@ -1,22 +1,30 @@
-import express,{type Request, type Response} from 'express';
-import dotenv from 'dotenv';
-import crypto from 'crypto';
+import 'dotenv/config'; // must come first
+import { app } from './app';
+import { logger } from './lib/logger';
+import { prisma } from './lib/prisma';
 
-dotenv.config();
+const PORT = Number(process.env.PORT ?? 3000);
 
-const PORT =process.env.PORT || 3000;
+async function bootstrap(): Promise<void> {
+  await prisma.$connect();
 
-// const secret= crypto.randomBytes(64).toString("hex");
+  const server = app.listen(PORT, () => {
+    logger.info({ port: PORT }, 'Server started');
+  });
 
-const app=express();
-app.use(express.json());
+  const shutdown = async (signal: string): Promise<void> => {
+    logger.info({ signal }, 'Shutting down');
+    server.close(async () => {
+      await prisma.$disconnect();
+      process.exit(0);
+    });
+  };
 
-app.get('/health',async(req:Request, res:Response)=>{
-    res.status(200).json({
-        message:"server is healthy"
-    })
+  process.on('SIGINT', () => void shutdown('SIGINT'));
+  process.on('SIGTERM', () => void shutdown('SIGTERM'));
+}
+
+bootstrap().catch((err) => {
+  logger.error({ err }, 'Failed to start server');
+  process.exit(1);
 });
-
-app.listen( PORT, ()=>{
-    console.log(`server running on port ${PORT}`);
-})
