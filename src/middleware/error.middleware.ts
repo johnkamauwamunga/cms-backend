@@ -1,6 +1,6 @@
+import jwt from 'jsonwebtoken';           // default import — always works
 import type { Request, Response, NextFunction } from 'express';
 import { Prisma } from '@prisma/client';
-import { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
 
 import { AppError } from '../errors/app-error';
 import { ValidationError } from '../errors/validation.error';
@@ -8,10 +8,9 @@ import { AuthenticationError } from '../errors/authentication.error';
 import { ConflictError } from '../errors/conflict.error';
 import { logger } from '../lib/logger';
 
-/**
- * Translate third-party errors (JWT, Prisma, ...) into AppError so the
- * client gets a correct status code instead of a generic 500.
- */
+// Pull the classes off the default export at runtime.
+const { TokenExpiredError, JsonWebTokenError } = jwt;
+
 function normalizeError(error: unknown): AppError | null {
   if (error instanceof AppError) return error;
 
@@ -66,7 +65,6 @@ export const errorHandler = (
     return;
   }
 
-  // Truly unexpected — programmer error or unhandled library error.
   logger.error(
     {
       requestId: req.requestId,
