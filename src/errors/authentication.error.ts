@@ -1,7 +1,7 @@
-import { AppError } from "./app-error";
+import { AppError } from './app-error';
+
 export class AuthenticationError extends AppError {
-  constructor(message: string) {
-    super(message, 401);
-    this.name = "AuthenticationError";
+  constructor(message = 'Authentication required') {
+    super(message, 401, true, 'AUTHENTICATION_ERROR');
   }
 }
