@@ -92,6 +92,16 @@ export const reorderSchema = z
   })
   .strict();
 
+  export const projectSlugParamSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(1, 'Slug is required')
+    .max(120)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Invalid slug'),
+});
+
 export type CreateProjectDto = z.infer<typeof createProjectSchema>;
 export type UpdateProjectDto = z.infer<typeof updateProjectSchema>;
 export type AddProjectImageDto = z.infer<typeof addProjectImageSchema>;

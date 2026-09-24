@@ -7,6 +7,7 @@ import {
   listProjectQuerySchema,
   projectIdParamSchema,
   projectImageParamSchema,
+  projectSlugParamSchema,
   addProjectImageSchema,
   updateProjectImageSchema,
   reorderSchema,
@@ -46,16 +47,20 @@ export const projectController = {
     }
   },
 
-  async getPublicBySlug(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { slug } = req.params;
-      if (!slug) throw new ValidationError('Missing slug');
-      const item = await projectService.getPublicBySlug(slug);
-      res.status(200).json({ status: 'success', data: item });
-    } catch (err) {
-      next(err);
+async getPublicBySlug(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const parsed = projectSlugParamSchema.safeParse(req.params);
+    if (!parsed.success) {
+      throw new ValidationError('Invalid slug', {
+        issues: parsed.error.flatten().fieldErrors,
+      });
     }
-  },
+    const item = await projectService.getPublicBySlug(parsed.data.slug);
+    res.status(200).json({ status: 'success', data: item });
+  } catch (err) {
+    next(err);
+  }
+},
 
   // ---------- admin: projects ----------
 
