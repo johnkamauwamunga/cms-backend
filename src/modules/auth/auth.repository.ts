@@ -1,43 +1,61 @@
-import { prisma } from "../../lib/prisma";
+import { prisma } from '../../lib/prisma';
+import type { AccountProvider, Prisma, RefreshToken, User } from '@prisma/client';
 
-export function findUserByEmail(email: string) {
-  return prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
-}
+export const authRepository = {
+  findUserByEmail(email: string): Promise<User | null> {
+    return prisma.user.findUnique({ where: { email } });
+  },
 
-export function findUserById(id: string) {
-  return prisma.user.findUnique({
-    where: {
-      id,
-    },
-  });
-}
+  findUserById(id: string): Promise<User | null> {
+    return prisma.user.findUnique({ where: { id } });
+  },
 
-export function createUser(
-  email: string,
-  passwordHash: string
-) {
-  return prisma.user.create({
-    data: {
-      email,
-      passwordHash,
-    },
-  });
-}
+  createUser(data: Prisma.UserCreateInput): Promise<User> {
+    return prisma.user.create({ data });
+  },
 
-export function createRefreshToken(
-  userId: string,
-  tokenHash: string,
-  expiresAt: Date
-) {
-  return prisma.refreshToken.create({
-    data: {
-      userId,
-      tokenHash,
-      expiresAt,
-    },
-  });
-}
+  findAccountByProvider(
+    provider: AccountProvider,
+    providerId: string,
+  ) {
+    return prisma.account.findUnique({
+      where: { provider_providerId: { provider, providerId } },
+      include: { user: true },
+    });
+  },
+
+  createAccount(data: Prisma.AccountCreateInput) {
+    return prisma.account.create({ data });
+  },
+
+  // ---- refresh tokens ----
+
+  createRefreshToken(data: {
+    tokenHash: string;
+    userId: string;
+    expiresAt: Date;
+  }): Promise<RefreshToken> {
+    return prisma.refreshToken.create({ data });
+  },
+
+  findRefreshTokenByHash(tokenHash: string) {
+    return prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
+  },
+
+  revokeRefreshToken(id: string): Promise<RefreshToken> {
+    return prisma.refreshToken.update({
+      where: { id },
+      data: { revokedAt: new Date() },
+    });
+  },
+
+  revokeAllUserRefreshTokens(userId: string): Promise<Prisma.BatchPayload> {
+    return prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  },
+};
