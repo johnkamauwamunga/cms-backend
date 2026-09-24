@@ -4,11 +4,21 @@ import { uploadRouter } from '../modules/uploads/upload.routes';
 import { profileRouter } from '../modules/profile/profile.routes';
 import { interestRouter } from '../modules/interests/interest.routes';
 import { interestAdminRouter } from '../modules/interests/interest.admin.routes';
+import { experienceRouter } from '../modules/experience/experience.routes';
+import { experienceAdminRouter } from '../modules/experience/experience.admin.routes';
+import { educationRouter } from '../modules/education/education.routes';
+import { educationAdminRouter } from '../modules/education/education.admin.routes';
 
 export const router = Router();
 
 router.use('/auth', authRouter);
 router.use('/uploads', uploadRouter);
 router.use('/profile', profileRouter);
+
 router.use('/interests', interestRouter);
+router.use('/experience', experienceRouter);
+router.use('/education', educationRouter);
+
 router.use('/admin/interests', interestAdminRouter);
+router.use('/admin/experience', experienceAdminRouter);
+router.use('/admin/education', educationAdminRouter);
